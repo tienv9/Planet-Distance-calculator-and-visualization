@@ -3,7 +3,9 @@ import math
 
 # Orbit radius (scaled for display) + real distance from Sun (million km)
 # static info - should replace with real time data
-planets = {
+# a - semi-major axis (horizontal radius of ellipse)
+# b - semi minor axis (vertical radius of ellipse)
+planets = { # should be chance to bodies if include the sun
     "Mercury": {"orbit": 40, "distance": 57.9, "color": "gray"},
     "Venus": {"orbit": 70, "distance": 108.2, "color": "orange"},
     "Earth": {"orbit": 100, "distance": 149.6, "color": "blue"},
@@ -13,6 +15,25 @@ planets = {
     "Uranus": {"orbit": 320, "distance": 2871.0, "color": "light blue"},
     "Neptune": {"orbit": 380, "distance": 4495.1, "color": "dark blue"},
 }
+
+bodies = {
+    "Sol": {"a": 0, "b": 0, "angle": 0, "color": "yellow"},
+    "Mercury": {"a": 50, "b": 45, "angle": 252.3, "color": "gray"},
+    "Venus": {"a": 80, "b": 75, "angle": 181.2, "color": "orange"},
+    "Earth": {"a": 120, "b": 115, "angle": 100.5, "color": "blue"},
+    "Mars": {"a": 170, "b": 160, "angle": 355.1, "color": "red"},
+    "Ceres": {"a": 210, "b": 200, "angle": 210.7, "color": "white"},
+    "Jupiter": {"a": 260, "b": 250, "angle": 34.8, "color": "brown"},
+    "Saturn": {"a": 320, "b": 310, "angle": 120.4, "color": "gold"},
+    "Uranus": {"a": 380, "b": 370, "angle": 210.0, "color": "light blue"},
+    "Neptune": {"a": 440, "b": 430, "angle": 300.2, "color": "dark blue"},
+    "Pluto": {"a": 500, "b": 460, "angle": 45.9, "color": "light gray"},
+    "Eris": {"a": 560, "b": 520, "angle": 130.6, "color": "pink"},
+}
+
+#change to list and add other planet later
+moon = {"orbit": 20, "color": "white"}
+
 
 selected = []
 planet_items = {}
@@ -34,6 +55,8 @@ result_label.pack()
 
 # Sun
 canvas.create_oval(CENTER-15, CENTER-15, CENTER+15, CENTER+15, fill="yellow")
+
+
 
 def on_click(event):
     item = canvas.find_closest(event.x, event.y)[0]
