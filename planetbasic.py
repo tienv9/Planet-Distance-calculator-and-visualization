@@ -5,27 +5,24 @@ import math
 # static info - should replace with real time data
 # a - semi-major axis (horizontal radius of ellipse)
 # b - semi minor axis (vertical radius of ellipse)
-
-PIXELS_PER_AU = 120
-
 bodies = {
-    "Sol":      {"a": 0.0,      "e": 0,     "angle": 0,     "speed": 1, "color": "yellow"},
-    "Mercury":  {"a": 0.39,     "e": 0.206,    "angle": 252.3, "speed": 1, "color": "gray"},
-    "Venus":    {"a": 0.72,     "e": 0.007,    "angle": 181.2, "speed": 1, "color": "orange"},
-    "Earth":    {"a": 1.00,     "e": 0.017,   "angle": 100.5, "speed": 1, "color": "blue"},
-    "Mars":     {"a": 1.52,     "e": 0.093,   "angle": 355.1, "speed": 1, "color": "red"},
-    "Ceres":    {"a": 2.77,     "e": 0.076,   "angle": 210.7, "speed": 1, "color": "white"},
-    "Jupiter":  {"a": 5.20,     "e": 0.049,   "angle": 34.8,  "speed": 1, "color": "brown"},
-    "Saturn":   {"a": 9.58,     "e": 0.056,   "angle": 120.4, "speed": 1, "color": "gold"},
-    "Uranus":   {"a": 19.2,     "e": 0.047,   "angle": 210.0, "speed": 1, "color": "light blue"},
-    "Neptune":  {"a": 30.1,     "e": 0.009,   "angle": 300.2, "speed": 1, "color": "dark blue"},
-    "Pluto":    {"a": 39.5,     "e": 0.248,   "angle": 45.9,  "speed": 1, "color": "light gray"},
-    "Eris":     {"a": 67.7,     "e": 0.44,   "angle": 130.6, "speed": 1, "color": "pink"},
+    "Sol":      {"a": 0,    "b": 0,     "angle": 0,     "speed": 1, "color": "yellow"},
+    "Mercury":  {"a": 50,   "b": 45,    "angle": 252.3, "speed": 1, "color": "gray"},
+    "Venus":    {"a": 80,   "b": 75,    "angle": 181.2, "speed": 1, "color": "orange"},
+    "Earth":    {"a": 120,  "b": 115,   "angle": 100.5, "speed": 1, "color": "blue"},
+    "Mars":     {"a": 170,  "b": 160,   "angle": 355.1, "speed": 1, "color": "red"},
+    "Ceres":    {"a": 210,  "b": 200,   "angle": 210.7, "speed": 1, "color": "white"},
+    "Jupiter":  {"a": 260,  "b": 250,   "angle": 34.8,  "speed": 1, "color": "brown"},
+    "Saturn":   {"a": 320,  "b": 310,   "angle": 120.4, "speed": 1, "color": "gold"},
+    "Uranus":   {"a": 380,  "b": 370,   "angle": 210.0, "speed": 1, "color": "light blue"},
+    "Neptune":  {"a": 440,  "b": 430,   "angle": 300.2, "speed": 1, "color": "dark blue"},
+    "Pluto":    {"a": 500,  "b": 460,   "angle": 45.9,  "speed": 1, "color": "light gray"},
+    "Eris":     {"a": 560,  "b": 520,   "angle": 130.6, "speed": 1, "color": "pink"},
 }
 
 #change to list and add other planet later
 moon = {
-    "Luna": {"orbit": 0.00257, "angle": 60, "speed": 1, "color": "white"}
+    "Luna": {"orbit": 20, "angle": 60, "speed": 1, "color": "white"}
 }
 
 items = {}
@@ -56,28 +53,22 @@ result_label = tk.Label(root, text="", font=("Arial", 12))
 result_label.pack()
 
 # Sun
-sun = canvas.create_oval(CENTER-10, CENTER-10, CENTER+10, CENTER+10, fill="yellow")
+sun = canvas.create_oval(CENTER-15, CENTER-15, CENTER+15, CENTER+15, fill="yellow")
 items[sun] = "Sun"
-positions["Sun"] = (0, 0)
+positions["Sun"] = (CENTER, CENTER)
 
 
 #orbit
 for name, data in bodies.items():
-    if name == "Sol":
+    if name == "Sun":
         continue
 
-    a = data["a"]
-    e = data["e"]
+    a, b = data["a"], data["b"]
 
-    b = a * math.sqrt(1 - e**2)
-
-    # convert to pixels
-    ap = a * PIXELS_PER_AU
-    bp = b * PIXELS_PER_AU
 
     canvas.create_oval(
-        CENTER-ap, CENTER-bp,
-        CENTER+ap, CENTER+bp,
+        CENTER-a, CENTER-b,
+        CENTER+a, CENTER+b,
         outline="white"
     )
 
@@ -98,37 +89,25 @@ def update_positions():
             continue
 
         angle = math.radians(data["angle"])
-        a = data["a"]
-        e = data["e"]
+        a, b = data["a"], data["b"]
 
-        b = a * math.sqrt(1 - e**2)
+        x = CENTER + a * math.cos(angle)
+        y = CENTER + b * math.sin(angle)
 
-        # TRUE position in AU
-        x_au = a * math.cos(angle)
-        y_au = b * math.sin(angle)
-
-        positions[name] = (x_au, y_au)
-
-        # convert to pixels
-        x = CENTER + x_au * PIXELS_PER_AU
-        y = CENTER + y_au * PIXELS_PER_AU
-
-        canvas.coords(planet_drawings[name], x-4, y-4, x+4, y+4)
+        canvas.coords(planet_drawings[name], x-6, y-6, x+6, y+6)
         canvas.coords(labels[name], x, y-10)
 
-    # Moon relative to Earth
+        positions[name] = (x, y)
+
+    # moon distance from earth
     moon_angle = math.radians(moon["Luna"]["angle"])
     ex, ey = positions["Earth"]
 
-    mx_au = ex + moon["Luna"]["orbit"] * math.cos(moon_angle)
-    my_au = ey + moon["Luna"]["orbit"] * math.sin(moon_angle)
+    mx = ex + moon["Luna"]["orbit"] * math.cos(moon_angle)
+    my = ey + moon["Luna"]["orbit"] * math.sin(moon_angle)
 
-    positions["Luna"] = (mx_au, my_au)
-
-    mx = CENTER + mx_au * PIXELS_PER_AU
-    my = CENTER + my_au * PIXELS_PER_AU
-
-    canvas.coords(moon_item, mx-2, my-2, mx+2, my+2)
+    canvas.coords(moon_item, mx-3, my-3, mx+3, my+3)
+    positions["Luna"] = (mx, my)
 
 
 def on_click(event):
@@ -154,7 +133,11 @@ def calculate_distance():
     x2, y2 = positions[p2]
 
     # Pixel distance (visual)
-    distance_au = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+    pixel_distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+    # Convert to AU
+    SCALE_A = bodies["Earth"]["a"]
+    distance_au = pixel_distance / SCALE_A
 
     # Convert to km and mile
     distance_km = distance_au * AU_TO_KM
@@ -162,8 +145,6 @@ def calculate_distance():
 
     # Light travel time
     time_seconds = distance_km / LIGHT_SPEED_KM_S
-    minutes = int(time_seconds // 60)
-    seconds = int(time_seconds % 60)
 
     # Convert to minutes + seconds
     minutes = int(time_seconds // 60)
@@ -172,7 +153,7 @@ def calculate_distance():
     result_label.config(
         text=(
             f"{p1} ↔ {p2}\n"
-            f"Scaled: {distance_au:.3f} AU\n"
+            f"Scaled: {pixel_distance:.2f} units\n"
             f"Distance: {distance_km:,.0f} km or {distance_mile:,.0f} mile\n"
             f"Light time: {minutes}m {seconds}s"
         )
