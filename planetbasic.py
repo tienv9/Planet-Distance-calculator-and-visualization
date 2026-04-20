@@ -31,6 +31,9 @@ selected = {}
 planet_drawings = {}
 labels = {}
 
+running = False
+SIM_SPEED = 10  # days per second
+FRAME_TIME = 0.03  # 30ms
 AU_TO_KM = 149597870.691 # 1 astronomical unit to km
 AU_TO_MILE = 92955807.267433 # 1 astronomical unit to mile
 LIGHT_SPEED_KM_S = 299792.458 
@@ -109,6 +112,27 @@ def update_positions():
     canvas.coords(moon_item, mx-3, my-3, mx+3, my+3)
     positions["Luna"] = (mx, my)
 
+def simulate():
+    if not running:
+        return
+
+    delta_days = SIM_SPEED * FRAME_TIME
+
+    # update planet angles
+    for name, data in bodies.items():
+        if name == "Sol":
+            continue
+
+        data["angle"] += data["speed"] * delta_days
+        data["angle"] %= 360  # keep within 0–360
+
+    # update moon
+    moon["Luna"]["angle"] += moon["Luna"]["speed"] * delta_days
+    moon["Luna"]["angle"] %= 360
+
+    update_positions()
+
+    root.after(int(FRAME_TIME * 1000), simulate)
 
 def on_click(event):
     item = canvas.find_closest(event.x, event.y)[0]
@@ -160,6 +184,21 @@ def calculate_distance():
     )
 
     selected.clear()
+
+#button for real speed movement of bodies
+def toggle_simulation():
+    global running
+    running = not running
+
+    if running:
+        simulate()
+        btn.config(text="Pause")
+    else:
+        btn.config(text="Start")
+
+btn = tk.Button(root, text="Start", command=toggle_simulation)
+btn.pack()
+
 
 canvas.bind("<Button-1>", on_click)
 
