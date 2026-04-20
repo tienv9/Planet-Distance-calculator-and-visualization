@@ -60,12 +60,6 @@ for name, data in bodies.items():
 
     a, b = data["a"], data["b"]
 
-    planet = canvas.create_oval(0, 0, 0, 0, fill=data["color"])
-    label = canvas.create_text(0, 0, text=name, fill="white", font=("Arial", 8))
-
-    items[planet] = name
-    planet_drawings[name] = planet
-    labels[name] = label
 
     canvas.create_oval(
         CENTER-a, CENTER-b,
@@ -73,6 +67,12 @@ for name, data in bodies.items():
         outline="white"
     )
 
+    planet = canvas.create_oval(0, 0, 0, 0, fill=data["color"])
+    label = canvas.create_text(0, 0, text=name, fill="white", font=("Arial", 8))
+
+    items[planet] = name
+    planet_drawings[name] = planet
+    labels[name] = label
 
 moon_item = canvas.create_oval(0, 0, 0, 0, fill="white")
 items[moon_item] = "Luna"
