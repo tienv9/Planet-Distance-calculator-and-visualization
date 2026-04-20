@@ -30,24 +30,21 @@ positions = {}
 selected = {}
 planet_drawings = {}
 labels = {}
+orbit_items = {}
 
 running = False
-SIM_SPEED = 10  # days per second
-FRAME_TIME = 0.03  # 30ms
+SIM_SPEED = 10 # default speed of 10 days per seconds
+FRAME_TIME = 0.03
+
 AU_TO_KM = 149597870.691 # 1 astronomical unit to km
 AU_TO_MILE = 92955807.267433 # 1 astronomical unit to mile
-LIGHT_SPEED_KM_S = 299792.458 
-SCALE_A = bodies["Earth"]["a"]  # treat as 1 AU
-
-#setup for window
-WIDTH, HEIGHT = 900, 900
-CENTER = WIDTH // 2
+LIGHT_SPEED_KM_S = 299792.458
 
 root = tk.Tk()
 root.title("Interactive Solar System")
 
-canvas = tk.Canvas(root, width=WIDTH, height=HEIGHT, bg="black")
-canvas.pack()
+canvas = tk.Canvas(root, bg="black")
+canvas.pack(fill="both", expand=True)
 
 info_label = tk.Label(root, text="Click two planets", font=("Arial", 14))
 info_label.pack()
@@ -55,59 +52,76 @@ info_label.pack()
 result_label = tk.Label(root, text="", font=("Arial", 12))
 result_label.pack()
 
-# Sun
-sun = canvas.create_oval(CENTER-15, CENTER-15, CENTER+15, CENTER+15, fill="yellow")
+def get_scale():
+    max_a = max(data["a"] for name, data in bodies.items() if name != "Sol")
+    size = min(canvas.winfo_width(), canvas.winfo_height())
+    return (size * 0.4) / max_a
+
+sun = canvas.create_oval(0, 0, 0, 0, fill="yellow")
 items[sun] = "Sol"
-positions["Sol"] = (CENTER, CENTER)
 
+def create_orbits_and_planets():
+    scale = get_scale()
 
-#orbit
-for name, data in bodies.items():
-    if name == "Sol":
-        continue
+    for item in orbit_items.values():
+        canvas.delete(item)
+    orbit_items.clear()
 
-    a, b = data["a"], data["b"]
+    cx = canvas.winfo_width() // 2
+    cy = canvas.winfo_height() // 2
 
+    for name, data in bodies.items():
+        if name == "Sol":
+            continue
 
-    canvas.create_oval(
-        CENTER-a, CENTER-b,
-        CENTER+a, CENTER+b,
-        outline="white"
-    )
+        ap = data["a"] * scale
+        bp = data["b"] * scale
 
-    planet = canvas.create_oval(0, 0, 0, 0, fill=data["color"])
-    label = canvas.create_text(0, 0, text=name, fill="white", font=("Arial", 8))
+        if name not in planet_drawings:
+            planet = canvas.create_oval(0, 0, 0, 0, fill=data["color"])
+            label = canvas.create_text(0, 0, text=name, fill="white", font=("Arial", 8))
 
-    items[planet] = name
-    planet_drawings[name] = planet
-    labels[name] = label
+            items[planet] = name
+            planet_drawings[name] = planet
+            labels[name] = label
+            
+        orbit = canvas.create_oval(
+            cx - ap, cy - bp,
+            cx + ap, cy + bp,
+            outline="white"
+        )
+        orbit_items[name] = orbit
 
 moon_item = canvas.create_oval(0, 0, 0, 0, fill="white")
 items[moon_item] = "Luna"
 
-
 def update_positions():
+    scale = get_scale()
+    cx = canvas.winfo_width() // 2
+    cy = canvas.winfo_height() // 2
+
+    canvas.coords(sun, cx-12, cy-12, cx+12, cy+12)
+    positions["Sol"] = (cx, cy)
+
     for name, data in bodies.items():
         if name == "Sol":
             continue
 
         angle = math.radians(data["angle"])
-        a, b = data["a"], data["b"]
 
-        x = CENTER + a * math.cos(angle)
-        y = CENTER + b * math.sin(angle)
+        x = cx + data["a"] * scale * math.cos(angle)
+        y = cy + data["b"] * scale * math.sin(angle)
 
-        canvas.coords(planet_drawings[name], x-6, y-6, x+6, y+6)
+        canvas.coords(planet_drawings[name], x-5, y-5, x+5, y+5)
         canvas.coords(labels[name], x, y-10)
 
         positions[name] = (x, y)
 
-    # moon distance from earth
-    moon_angle = math.radians(moon["Luna"]["angle"])
     ex, ey = positions["Earth"]
+    moon_angle = math.radians(moon["Luna"]["angle"])
 
-    mx = ex + moon["Luna"]["orbit"] * math.cos(moon_angle)
-    my = ey + moon["Luna"]["orbit"] * math.sin(moon_angle)
+    mx = ex + moon["Luna"]["orbit"] * scale * math.cos(moon_angle)
+    my = ey + moon["Luna"]["orbit"] * scale * math.sin(moon_angle)
 
     canvas.coords(moon_item, mx-3, my-3, mx+3, my+3)
     positions["Luna"] = (mx, my)
@@ -118,20 +132,17 @@ def simulate():
 
     delta_days = SIM_SPEED * FRAME_TIME
 
-    # update planet angles
     for name, data in bodies.items():
         if name == "Sol":
             continue
 
-        degrees_per_day = 360 / data["speed"]
-        data["angle"] += degrees_per_day * delta_days
+        deg = 360 / data["speed"]
+        data["angle"] = (data["angle"] + deg * delta_days) % 360
 
-    # update moon
-    moon_deg_per_day = 360 / moon["Luna"]["speed"]
-    moon["Luna"]["angle"] += moon_deg_per_day * delta_days
+    moon_deg = 360 / moon["Luna"]["speed"]
+    moon["Luna"]["angle"] = (moon["Luna"]["angle"] + moon_deg * delta_days) % 360
 
     update_positions()
-
     root.after(int(FRAME_TIME * 1000), simulate)
 
 def on_click(event):
@@ -148,44 +159,30 @@ def on_click(event):
         if len(selected) == 2:
             calculate_distance()
 
-
 def calculate_distance():
-    names = list(selected.keys())
-    p1, p2 = names[0], names[1]
+    p1, p2 = list(selected.keys())
 
     x1, y1 = positions[p1]
     x2, y2 = positions[p2]
 
-    # Pixel distance (visual)
-    pixel_distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+    pixel_distance = math.sqrt((x2-x1)**2 + (y2-y1)**2)
 
-    # Convert to AU
-    SCALE_A = bodies["Earth"]["a"]
-    distance_au = pixel_distance / SCALE_A
+    scale = get_scale()
+    distance_au = pixel_distance / (bodies["Earth"]["a"] * scale)
 
-    # Convert to km and mile
-    distance_km = distance_au * AU_TO_KM
-    distance_mile = distance_au * AU_TO_MILE
+    km = distance_au * AU_TO_KM
+    miles = distance_au * AU_TO_MILE
 
-    # Light travel time
-    time_seconds = distance_km / LIGHT_SPEED_KM_S
-
-    # Convert to minutes + seconds
-    minutes = int(time_seconds // 60)
-    seconds = int(time_seconds % 60)
+    light_sec = km / LIGHT_SPEED_KM_S
+    m = int(light_sec // 60)
+    s = int(light_sec % 60)
 
     result_label.config(
-        text=(
-            f"{p1} ↔ {p2}\n"
-            f"Scaled: {pixel_distance:.2f} units\n"
-            f"Distance: {distance_km:,.0f} km or {distance_mile:,.0f} mile\n"
-            f"Light time: {minutes}m {seconds}s"
-        )
+        text=f"{p1} ↔ {p2}\n{km:,.0f} km | {miles:,.0f} mi\nLight: {m}m {s}s"
     )
 
     selected.clear()
 
-#button for real speed movement of bodies
 def toggle_simulation():
     global running
     running = not running
@@ -203,18 +200,9 @@ def update_speed(val):
     global SIM_SPEED
     SIM_SPEED = float(val)
 
-speed_label = tk.Label(root, text="Simulation Speed (days/sec)")
-speed_label.pack()
-
-speed_slider = tk.Scale(
-    root,
-    from_=1,
-    to=365,   # change to any days/sec
-    orient="horizontal",
-    resolution=1,
-    command=update_speed
-)
-speed_slider.set(10)  # default = 10 days/sec
+speed_slider = tk.Scale(root, from_=1, to=365, orient="horizontal",
+                        resolution=1, command=update_speed)
+speed_slider.set(10)
 speed_slider.pack()
 
 def set_speed(days):
@@ -230,10 +218,14 @@ tk.Button(preset_frame, text="10 Day/s", command=lambda: set_speed(10)).pack(sid
 tk.Button(preset_frame, text="1 Month/s", command=lambda: set_speed(30)).pack(side="left")
 tk.Button(preset_frame, text="1 Year/s", command=lambda: set_speed(365)).pack(side="left")
 
+def on_resize(event):
+    create_orbits_and_planets()
+    update_positions()
 
+canvas.bind("<Configure>", on_resize)
 canvas.bind("<Button-1>", on_click)
 
-# initial render
+create_orbits_and_planets()
 update_positions()
 
 root.mainloop()
