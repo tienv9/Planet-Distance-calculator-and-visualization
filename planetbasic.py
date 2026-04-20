@@ -6,23 +6,23 @@ import math
 # a - semi-major axis (horizontal radius of ellipse)
 # b - semi minor axis (vertical radius of ellipse)
 bodies = {
-    "Sol":      {"a": 0,    "b": 0,     "angle": 0,     "speed": 1, "color": "yellow"},
-    "Mercury":  {"a": 50,   "b": 45,    "angle": 252.3, "speed": 1, "color": "gray"},
-    "Venus":    {"a": 80,   "b": 75,    "angle": 181.2, "speed": 1, "color": "orange"},
-    "Earth":    {"a": 120,  "b": 115,   "angle": 100.5, "speed": 1, "color": "blue"},
-    "Mars":     {"a": 170,  "b": 160,   "angle": 355.1, "speed": 1, "color": "red"},
-    "Ceres":    {"a": 210,  "b": 200,   "angle": 210.7, "speed": 1, "color": "white"},
-    "Jupiter":  {"a": 260,  "b": 250,   "angle": 34.8,  "speed": 1, "color": "brown"},
-    "Saturn":   {"a": 320,  "b": 310,   "angle": 120.4, "speed": 1, "color": "gold"},
-    "Uranus":   {"a": 380,  "b": 370,   "angle": 210.0, "speed": 1, "color": "light blue"},
-    "Neptune":  {"a": 440,  "b": 430,   "angle": 300.2, "speed": 1, "color": "dark blue"},
-    "Pluto":    {"a": 500,  "b": 460,   "angle": 45.9,  "speed": 1, "color": "light gray"},
-    "Eris":     {"a": 560,  "b": 520,   "angle": 130.6, "speed": 1, "color": "pink"},
-}
+    "Sol":      {"a": 0,    "b": 0,     "angle": 0,     "speed": 1,      "color": "yellow"},
+    "Mercury":  {"a": 50,   "b": 45,    "angle": 252.3, "speed": 88,     "color": "gray"},
+    "Venus":    {"a": 80,   "b": 75,    "angle": 181.2, "speed": 225,    "color": "orange"},
+    "Earth":    {"a": 120,  "b": 115,   "angle": 100.5, "speed": 365,    "color": "blue"},
+    "Mars":     {"a": 170,  "b": 160,   "angle": 355.1, "speed": 687,    "color": "red"},
+    "Ceres":    {"a": 210,  "b": 200,   "angle": 210.7, "speed": 1680,   "color": "white"},
+    "Jupiter":  {"a": 260,  "b": 250,   "angle": 34.8,  "speed": 4333,   "color": "brown"},
+    "Saturn":   {"a": 320,  "b": 310,   "angle": 120.4, "speed": 10759,  "color": "gold"},
+    "Uranus":   {"a": 380,  "b": 370,   "angle": 210.0, "speed": 30687,  "color": "light blue"},
+    "Neptune":  {"a": 440,  "b": 430,   "angle": 300.2, "speed": 60190,  "color": "dark blue"},
+    "Pluto":    {"a": 500,  "b": 460,   "angle": 45.9,  "speed": 90560,  "color": "light gray"},
+    "Eris":     {"a": 560,  "b": 520,   "angle": 130.6, "speed": 203600, "color": "pink"},
+} #kepler second law make planet move faster need the sun - idea for later
 
 #change to list and add other planet later
 moon = {
-    "Luna": {"orbit": 20, "angle": 60, "speed": 1, "color": "white"}
+    "Luna": {"orbit": 20, "angle": 60, "speed": 27.3, "color": "white"}
 }
 
 items = {}
@@ -57,13 +57,13 @@ result_label.pack()
 
 # Sun
 sun = canvas.create_oval(CENTER-15, CENTER-15, CENTER+15, CENTER+15, fill="yellow")
-items[sun] = "Sun"
-positions["Sun"] = (CENTER, CENTER)
+items[sun] = "Sol"
+positions["Sol"] = (CENTER, CENTER)
 
 
 #orbit
 for name, data in bodies.items():
-    if name == "Sun":
+    if name == "Sol":
         continue
 
     a, b = data["a"], data["b"]
@@ -123,12 +123,12 @@ def simulate():
         if name == "Sol":
             continue
 
-        data["angle"] += data["speed"] * delta_days
-        data["angle"] %= 360  # keep within 0–360
+        degrees_per_day = 360 / data["speed"]
+        data["angle"] += degrees_per_day * delta_days
 
     # update moon
-    moon["Luna"]["angle"] += moon["Luna"]["speed"] * delta_days
-    moon["Luna"]["angle"] %= 360
+    moon_deg_per_day = 360 / moon["Luna"]["speed"]
+    moon["Luna"]["angle"] += moon_deg_per_day * delta_days
 
     update_positions()
 
@@ -198,6 +198,37 @@ def toggle_simulation():
 
 btn = tk.Button(root, text="Start", command=toggle_simulation)
 btn.pack()
+
+def update_speed(val):
+    global SIM_SPEED
+    SIM_SPEED = float(val)
+
+speed_label = tk.Label(root, text="Simulation Speed (days/sec)")
+speed_label.pack()
+
+speed_slider = tk.Scale(
+    root,
+    from_=1,
+    to=365,   # change to any days/sec
+    orient="horizontal",
+    resolution=1,
+    command=update_speed
+)
+speed_slider.set(10)  # default = 10 days/sec
+speed_slider.pack()
+
+def set_speed(days):
+    global SIM_SPEED
+    SIM_SPEED = days
+    speed_slider.set(days)
+
+preset_frame = tk.Frame(root)
+preset_frame.pack()
+
+tk.Button(preset_frame, text="1 Day/s", command=lambda: set_speed(1)).pack(side="left")
+tk.Button(preset_frame, text="10 Day/s", command=lambda: set_speed(10)).pack(side="left")
+tk.Button(preset_frame, text="1 Month/s", command=lambda: set_speed(30)).pack(side="left")
+tk.Button(preset_frame, text="1 Year/s", command=lambda: set_speed(365)).pack(side="left")
 
 
 canvas.bind("<Button-1>", on_click)
