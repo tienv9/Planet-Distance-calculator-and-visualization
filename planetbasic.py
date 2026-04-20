@@ -5,17 +5,6 @@ import math
 # static info - should replace with real time data
 # a - semi-major axis (horizontal radius of ellipse)
 # b - semi minor axis (vertical radius of ellipse)
-planets = { # should be chance to bodies if include the sun
-    "Mercury": {"orbit": 40, "distance": 57.9, "color": "gray"},
-    "Venus": {"orbit": 70, "distance": 108.2, "color": "orange"},
-    "Earth": {"orbit": 100, "distance": 149.6, "color": "blue"},
-    "Mars": {"orbit": 140, "distance": 227.9, "color": "red"},
-    "Jupiter": {"orbit": 200, "distance": 778.5, "color": "brown"},
-    "Saturn": {"orbit": 260, "distance": 1434.0, "color": "gold"},
-    "Uranus": {"orbit": 320, "distance": 2871.0, "color": "light blue"},
-    "Neptune": {"orbit": 380, "distance": 4495.1, "color": "dark blue"},
-}
-
 bodies = {
     "Sol":      {"a": 0,    "b": 0,     "angle": 0,     "speed": 1, "color": "yellow"},
     "Mercury":  {"a": 50,   "b": 45,    "angle": 252.3, "speed": 1, "color": "gray"},
@@ -32,12 +21,17 @@ bodies = {
 }
 
 #change to list and add other planet later
-moon = {"orbit": 20, "color": "white"}
+moon = {
+    "Luna": {"orbit": 20, "angle": 60, "speed": 1, "color": "white"}
+}
 
+items = {}
+positions = {}
+selected = {}
+planet_drawings = {}
+labels = {}
 
-selected = []
-planet_items = {}
-
+#setup for window
 WIDTH, HEIGHT = 800, 800
 CENTER = WIDTH // 2
 
@@ -54,64 +48,96 @@ result_label = tk.Label(root, text="", font=("Arial", 12))
 result_label.pack()
 
 # Sun
-canvas.create_oval(CENTER-15, CENTER-15, CENTER+15, CENTER+15, fill="yellow")
+sun = canvas.create_oval(CENTER-15, CENTER-15, CENTER+15, CENTER+15, fill="yellow")
+items[sun] = "Sun"
+positions["Sun"] = (CENTER, CENTER)
 
+
+#orbit
+for name, data in bodies.items():
+    if name == "Sun":
+        continue
+
+    a, b = data["a"], data["b"]
+
+    planet = canvas.create_oval(0, 0, 0, 0, fill=data["color"])
+    label = canvas.create_text(0, 0, text=name, fill="white", font=("Arial", 8))
+
+    items[planet] = name
+    planet_drawings[name] = planet
+    labels[name] = label
+
+    canvas.create_oval(
+        CENTER-a, CENTER-b,
+        CENTER+a, CENTER+b,
+        outline="white"
+    )
+
+
+moon_item = canvas.create_oval(0, 0, 0, 0, fill="white")
+items[moon_item] = "Luna"
+
+
+def update_positions():
+    for name, data in bodies.items():
+        if name == "Sun":
+            continue
+
+        angle = math.radians(data["angle"])
+        a, b = data["a"], data["b"]
+
+        x = CENTER + a * math.cos(angle)
+        y = CENTER + b * math.sin(angle)
+
+        canvas.coords(planet_drawings[name], x-6, y-6, x+6, y+6)
+        canvas.coords(labels[name], x, y-10)
+
+        positions[name] = (x, y)
+
+    # Moon relative to Earth
+    moon_angle = math.radians(moon["Luna"]["angle"])
+    ex, ey = positions["Earth"]
+
+    mx = ex + moon["Luna"]["orbit"] * math.cos(moon_angle)
+    my = ey + moon["Luna"]["orbit"] * math.sin(moon_angle)
+
+    canvas.coords(moon_item, mx-3, my-3, mx+3, my+3)
+    positions["Luna"] = (mx, my)
 
 
 def on_click(event):
     item = canvas.find_closest(event.x, event.y)[0]
 
-    if item in planet_items:
-        planet_name = planet_items[item]
+    if item in items:
+        name = items[item]
 
-        if planet_name not in selected:
-            selected.append(planet_name)
+        if name not in selected:
+            selected[name] = True
 
-        info_label.config(text=f"Selected: {', '.join(selected)}")
+        info_label.config(text=f"Selected: {', '.join(selected.keys())}")
 
         if len(selected) == 2:
             calculate_distance()
 
-def calculate_distance():
-    p1, p2 = selected
-    d1 = planets[p1]["distance"]
-    d2 = planets[p2]["distance"]
 
-    distance = abs(d1 - d2)
+def calculate_distance():
+    names = list(selected.keys())
+    p1, p2 = names[0], names[1]
+
+    x1, y1 = positions[p1]
+    x2, y2 = positions[p2]
+
+    distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
 
     result_label.config(
-        text=f"Distance: {distance:.2f} million km ({p1} ↔ {p2})"
+        text=f"Distance: {distance:.2f} units ({p1} <-> {p2})"
     )
 
     selected.clear()
 
-angle_offset = 0
-for name, data in planets.items():
-    orbit = data["orbit"]
-
-    #orbit
-    canvas.create_oval(
-        CENTER-orbit, CENTER-orbit,
-        CENTER+orbit, CENTER+orbit,
-        outline="white"
-    )
-
-    #planet (fixed angle for now)
-    angle = math.radians(angle_offset)
-    x = CENTER + orbit * math.cos(angle)
-    y = CENTER + orbit * math.sin(angle)
-
-    planet = canvas.create_oval(
-        x-6, y-6, x+6, y+6,
-        fill=data["color"]
-    )
-
-    canvas.create_text(x, y-10, text=name, fill="white", font=("Arial", 8))
-
-    planet_items[planet] = name
-
-    angle_offset += 45
-
 canvas.bind("<Button-1>", on_click)
+
+# initial render
+update_positions()
 
 root.mainloop()
