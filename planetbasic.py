@@ -90,6 +90,7 @@ def create_orbits_and_planets():
             cx + ap, cy + bp,
             outline="white"
         )
+        canvas.tag_lower(orbit)  #push orbit behind everything
         orbit_items[name] = orbit
 
 moon_item = canvas.create_oval(0, 0, 0, 0, fill="white")
