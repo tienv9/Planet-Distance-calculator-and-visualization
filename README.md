@@ -3,6 +3,15 @@
 A Python-based interactive solar system visualization built with Tkinter.  
 This project simulates planetary motion using real orbital periods, allows distance calculations between celestial bodies, and dynamically scales to fit any window size.
 
+This project is inspired by the Artemis II mission and my curiosity about space and our solar system.
+
+---
+
+## ⚠️ Disclaimer
+
+This project uses **static planetary data** and simplified orbital calculations.  
+The positions, distances, and motion are **not 100% scientifically accurate**, and the math used is a **surface-level approximation** intended for visualization purposes only.
+
 ---
 
 ##  Features
