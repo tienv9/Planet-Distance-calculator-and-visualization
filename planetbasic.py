@@ -31,8 +31,12 @@ selected = {}
 planet_drawings = {}
 labels = {}
 
+AU_TO_KM = 149_597_870 # 1 astronomical unit to km
+LIGHT_SPEED_KM_S = 299_792 
+SCALE_A = bodies["Earth"]["a"]  # treat as 1 AU
+
 #setup for window
-WIDTH, HEIGHT = 800, 800
+WIDTH, HEIGHT = 900, 900
 CENTER = WIDTH // 2
 
 root = tk.Tk()
@@ -80,7 +84,7 @@ items[moon_item] = "Luna"
 
 def update_positions():
     for name, data in bodies.items():
-        if name == "Sun":
+        if name == "Sol":
             continue
 
         angle = math.radians(data["angle"])
@@ -94,7 +98,7 @@ def update_positions():
 
         positions[name] = (x, y)
 
-    # Moon relative to Earth
+    # moon distance from earth
     moon_angle = math.radians(moon["Luna"]["angle"])
     ex, ey = positions["Earth"]
 
@@ -127,10 +131,30 @@ def calculate_distance():
     x1, y1 = positions[p1]
     x2, y2 = positions[p2]
 
-    distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+    # Pixel distance (visual)
+    pixel_distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+    # Convert to AU
+    SCALE_A = bodies["Earth"]["a"]
+    distance_au = pixel_distance / SCALE_A
+
+    # Convert to km
+    distance_km = distance_au * AU_TO_KM
+
+    # Light travel time
+    time_seconds = distance_km / LIGHT_SPEED_KM_S
+
+    # Convert to minutes + seconds
+    minutes = int(time_seconds // 60)
+    seconds = int(time_seconds % 60)
 
     result_label.config(
-        text=f"Distance: {distance:.2f} units ({p1} <-> {p2})"
+        text=(
+            f"{p1} ↔ {p2}\n"
+            f"Scaled: {pixel_distance:.2f} units\n"
+            f"Distance: {distance_km:,.0f} km\n"
+            f"Light time: {minutes}m {seconds}s"
+        )
     )
 
     selected.clear()
