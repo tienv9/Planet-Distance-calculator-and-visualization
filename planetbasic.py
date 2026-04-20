@@ -40,6 +40,7 @@ AU_TO_KM = 149597870.691 # 1 astronomical unit to km
 AU_TO_MILE = 92955807.267433 # 1 astronomical unit to mile
 LIGHT_SPEED_KM_S = 299792.458
 
+
 root = tk.Tk()
 root.title("Interactive Solar System")
 
@@ -60,6 +61,8 @@ def get_scale():
 sun = canvas.create_oval(0, 0, 0, 0, fill="yellow")
 items[sun] = "Sol"
 
+
+#drawing planet and their orbit
 def create_orbits_and_planets():
     scale = get_scale()
 
@@ -96,6 +99,8 @@ def create_orbits_and_planets():
 moon_item = canvas.create_oval(0, 0, 0, 0, fill="white")
 items[moon_item] = "Luna"
 
+
+#planet position base on angle
 def update_positions():
     scale = get_scale()
     cx = canvas.winfo_width() // 2
@@ -127,6 +132,7 @@ def update_positions():
     canvas.coords(moon_item, mx-3, my-3, mx+3, my+3)
     positions["Luna"] = (mx, my)
 
+#sim speed of planet 
 def simulate():
     if not running:
         return
@@ -146,6 +152,7 @@ def simulate():
     update_positions()
     root.after(int(FRAME_TIME * 1000), simulate)
 
+#select planet for distance calculation
 def on_click(event):
     item = canvas.find_closest(event.x, event.y)[0]
 
@@ -160,6 +167,7 @@ def on_click(event):
         if len(selected) == 2:
             calculate_distance()
 
+#calculate distance and other info
 def calculate_distance():
     p1, p2 = list(selected.keys())
 
@@ -179,11 +187,12 @@ def calculate_distance():
     s = int(light_sec % 60)
 
     result_label.config(
-        text=f"{p1} ↔ {p2}\n{km:,.0f} km | {miles:,.0f} mi\nLight: {m}m {s}s"
+        text=f"{p1} ↔ {p2}\n{km:,.0f} km | {miles:,.0f} mi\nLight speed: {m}m {s}s"
     )
 
     selected.clear()
 
+#toggle for planet movements
 def toggle_simulation():
     global running
     running = not running
