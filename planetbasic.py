@@ -31,8 +31,9 @@ selected = {}
 planet_drawings = {}
 labels = {}
 
-AU_TO_KM = 149_597_870 # 1 astronomical unit to km
-LIGHT_SPEED_KM_S = 299_792 
+AU_TO_KM = 149597870.691 # 1 astronomical unit to km
+AU_TO_MILE = 92955807.267433 # 1 astronomical unit to mile
+LIGHT_SPEED_KM_S = 299792.458 
 SCALE_A = bodies["Earth"]["a"]  # treat as 1 AU
 
 #setup for window
@@ -138,8 +139,9 @@ def calculate_distance():
     SCALE_A = bodies["Earth"]["a"]
     distance_au = pixel_distance / SCALE_A
 
-    # Convert to km
+    # Convert to km and mile
     distance_km = distance_au * AU_TO_KM
+    distance_mile = distance_au * AU_TO_MILE
 
     # Light travel time
     time_seconds = distance_km / LIGHT_SPEED_KM_S
@@ -152,7 +154,7 @@ def calculate_distance():
         text=(
             f"{p1} ↔ {p2}\n"
             f"Scaled: {pixel_distance:.2f} units\n"
-            f"Distance: {distance_km:,.0f} km\n"
+            f"Distance: {distance_km:,.0f} km or {distance_mile:,.0f} mile\n"
             f"Light time: {minutes}m {seconds}s"
         )
     )
